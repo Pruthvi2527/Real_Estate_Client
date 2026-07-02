@@ -30,7 +30,7 @@ export const HOME_FEATURES: HomeFeature[] = [
 ];
 
 export const HERO_IMAGE_URL =
-  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';
+  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=75&fm=webp';
 
 export const HERO_CONTENT = {
   title: 'Welcome to Real Estate CRUD',

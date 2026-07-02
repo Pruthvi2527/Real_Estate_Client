@@ -9,6 +9,7 @@ import { propertyService } from '@/services';
 import { PropertyFormProps } from '@/types/propertyForm.types';
 import { PROPERTY_TYPES } from '@/types/property.types';
 import { getErrorMessage } from '@/utils/error';
+import { propertyDataCache } from '@/utils/propertyDataCache';
 import { btnPrimary, btnSecondary, card, getInputClassName } from '@/utils/styles';
 import {
   PropertyFormData,
@@ -60,8 +61,10 @@ export const PropertyForm = (props: PropertyFormProps) => {
 
       if (props.mode === 'edit') {
         await propertyService.updateProperty(props.propertyId, payload);
+        propertyDataCache.removeDetail(props.propertyId);
       } else {
         await propertyService.createProperty(payload);
+        propertyDataCache.clear();
       }
 
       router.push('/properties');

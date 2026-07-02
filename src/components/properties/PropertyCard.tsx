@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { LocationIcon } from '@/components/ui/LocationIcon';
 import { Property } from '@/types/property.types';
 import { formatCurrency } from '@/utils/format';
-import { getPropertyImageUrl } from '@/utils/propertyImages';
+import { getPropertyImageBlur, getPropertyImageUrl } from '@/utils/propertyImages';
 import {
   btnCardDelete,
   btnCardEdit,
@@ -90,6 +90,9 @@ export const PropertyCard = memo(({
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-cover"
+          placeholder="blur"
+          blurDataURL={getPropertyImageBlur(property.propertyType)}
+          loading="lazy"
         />
 
         <span className="absolute left-4 top-4 rounded-full bg-indigo-600 px-3 py-1 text-xs font-semibold text-white shadow-sm">

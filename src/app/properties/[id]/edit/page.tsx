@@ -1,4 +1,15 @@
-import { PropertyFormPage } from '@/components/properties/PropertyFormPage';
+import dynamic from 'next/dynamic';
+import { LoadingState } from '@/components/ui/LoadingState';
+
+const PropertyFormPage = dynamic(
+  () =>
+    import('@/components/properties/PropertyFormPage').then(
+      (module) => module.PropertyFormPage
+    ),
+  {
+    loading: () => <LoadingState message="Loading form..." />,
+  }
+);
 
 interface EditPropertyPageProps {
   params: Promise<{ id: string }>;

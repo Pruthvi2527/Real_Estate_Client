@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { propertyService } from '@/services';
 import { Property } from '@/types/property.types';
 import { getErrorMessage } from '@/utils/error';
+import { propertyDataCache } from '@/utils/propertyDataCache';
 
 const SUCCESS_MESSAGE_DURATION_MS = 4000;
 
@@ -14,32 +15,49 @@ export const useProperties = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
+  const propertiesRef = useRef<Property[]>([]);
 
-  const fetchProperties = useCallback(async (): Promise<void> => {
-    setIsLoading(true);
+  useEffect(() => {
+    propertiesRef.current = properties;
+  }, [properties]);
+
+  const fetchProperties = useCallback(async (silent = false): Promise<void> => {
+    const cached = propertyDataCache.getList();
+
+    if (cached) {
+      setProperties(cached);
+      if (!silent) {
+        setIsLoading(false);
+      }
+    } else if (!silent) {
+      setIsLoading(true);
+    }
+
     setError(null);
 
     try {
       const data = await propertyService.getProperties();
+      propertyDataCache.setList(data);
       setProperties(data);
     } catch (err) {
-      setError(getErrorMessage(err, 'Failed to load properties'));
+      if (!cached) {
+        setError(getErrorMessage(err, 'Failed to load properties'));
+      }
     } finally {
-      setIsLoading(false);
+      if (!silent || !cached) {
+        setIsLoading(false);
+      }
     }
   }, []);
 
-  const requestDelete = useCallback(
-    (id: string): void => {
-      const property = properties.find((item) => item._id === id);
+  const requestDelete = useCallback((id: string): void => {
+    const property = propertiesRef.current.find((item) => item._id === id);
 
-      if (property) {
-        setPropertyToDelete(property);
-        setSuccessMessage(null);
-      }
-    },
-    [properties]
-  );
+    if (property) {
+      setPropertyToDelete(property);
+      setSuccessMessage(null);
+    }
+  }, []);
 
   const cancelDelete = useCallback((): void => {
     if (!deletingId) {
@@ -59,9 +77,11 @@ export const useProperties = () => {
 
     try {
       await propertyService.deleteProperty(id);
-      await fetchProperties();
+      propertyDataCache.removeDetail(id);
+      setProperties((current) => current.filter((property) => property._id !== id));
       setPropertyToDelete(null);
       setSuccessMessage('Property deleted successfully');
+      void fetchProperties(true);
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to delete property'));
     } finally {

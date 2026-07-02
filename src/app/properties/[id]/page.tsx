@@ -1,4 +1,15 @@
-import { PropertyDetails } from '@/components/properties/PropertyDetails';
+import dynamic from 'next/dynamic';
+import { LoadingState } from '@/components/ui/LoadingState';
+
+const PropertyDetails = dynamic(
+  () =>
+    import('@/components/properties/PropertyDetails').then(
+      (module) => module.PropertyDetails
+    ),
+  {
+    loading: () => <LoadingState message="Loading property details..." />,
+  }
+);
 
 interface PropertyDetailsPageProps {
   params: Promise<{ id: string }>;
