@@ -21,7 +21,7 @@ const handleResponseError = (error: AxiosError<ApiResponse<null>>): never => {
   const message =
     responseData?.message ??
     (error.code === 'ERR_NETWORK'
-      ? `Cannot reach the API server at ${getApiBaseUrl()}. Make sure the backend is running (npm run dev in the backend folder).`
+      ? `Cannot reach the API server at ${getApiBaseUrl()}. Check that the backend is deployed on Render and CORS allows your frontend domain.`
       : error.message) ??
     'Request failed';
   const apiError = responseData?.error ?? undefined;
