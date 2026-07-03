@@ -60,6 +60,20 @@ export const propertyDataCache = {
     listCache = null;
   },
 
+  removeFromList(id: string): void {
+    detailCache.delete(id);
+
+    if (!listCache || !isFresh(listCache)) {
+      listCache = null;
+      return;
+    }
+
+    listCache = {
+      value: listCache.value.filter((property) => property._id !== id),
+      expiresAt: listCache.expiresAt,
+    };
+  },
+
   clear(): void {
     listCache = null;
     detailCache.clear();

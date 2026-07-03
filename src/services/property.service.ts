@@ -10,8 +10,12 @@ const BASE_PATH = '/properties';
 export class PropertyService {
   constructor(private readonly client: ApiClient = api) {}
 
-  getProperties(): Promise<Property[]> {
-    return this.client.get<Property[]>(BASE_PATH);
+  getProperties(options?: { force?: boolean }): Promise<Property[]> {
+    const config = options?.force
+      ? { params: { _t: Date.now() } }
+      : undefined;
+
+    return this.client.get<Property[]>(BASE_PATH, config);
   }
 
   getProperty(id: string): Promise<Property> {
