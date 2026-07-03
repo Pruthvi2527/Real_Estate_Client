@@ -8,6 +8,11 @@ import { propertyDataCache } from '@/utils/propertyDataCache';
 
 const SUCCESS_MESSAGE_DURATION_MS = 4000;
 
+interface FetchPropertiesOptions {
+  silent?: boolean;
+  force?: boolean;
+}
+
 export const useProperties = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -21,34 +26,38 @@ export const useProperties = () => {
     propertiesRef.current = properties;
   }, [properties]);
 
-  const fetchProperties = useCallback(async (silent = false): Promise<void> => {
-    const cached = propertyDataCache.getList();
+  const fetchProperties = useCallback(
+    async (options: FetchPropertiesOptions = {}): Promise<void> => {
+      const { silent = false, force = false } = options;
+      const cached = force ? null : propertyDataCache.getList();
 
-    if (cached) {
-      setProperties(cached);
-      if (!silent) {
-        setIsLoading(false);
+      if (cached) {
+        setProperties(cached);
+        if (!silent) {
+          setIsLoading(false);
+        }
+      } else if (!silent) {
+        setIsLoading(true);
       }
-    } else if (!silent) {
-      setIsLoading(true);
-    }
 
-    setError(null);
+      setError(null);
 
-    try {
-      const data = await propertyService.getProperties();
-      propertyDataCache.setList(data);
-      setProperties(data);
-    } catch (err) {
-      if (!cached) {
-        setError(getErrorMessage(err, 'Failed to load properties'));
+      try {
+        const data = await propertyService.getProperties({ force });
+        propertyDataCache.setList(data);
+        setProperties(data);
+      } catch (err) {
+        if (!cached) {
+          setError(getErrorMessage(err, 'Failed to load properties'));
+        }
+      } finally {
+        if (!silent || !cached) {
+          setIsLoading(false);
+        }
       }
-    } finally {
-      if (!silent || !cached) {
-        setIsLoading(false);
-      }
-    }
-  }, []);
+    },
+    []
+  );
 
   const requestDelete = useCallback((id: string): void => {
     const property = propertiesRef.current.find((item) => item._id === id);
@@ -77,17 +86,22 @@ export const useProperties = () => {
 
     try {
       await propertyService.deleteProperty(id);
+
+      setProperties((current) => {
+        const next = current.filter((property) => property._id !== id);
+        propertyDataCache.setList(next);
+        return next;
+      });
       propertyDataCache.removeDetail(id);
-      setProperties((current) => current.filter((property) => property._id !== id));
+
       setPropertyToDelete(null);
       setSuccessMessage('Property deleted successfully');
-      void fetchProperties(true);
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to delete property'));
     } finally {
       setDeletingId(null);
     }
-  }, [propertyToDelete, fetchProperties]);
+  }, [propertyToDelete]);
 
   const dismissError = useCallback((): void => {
     setError(null);
@@ -125,6 +139,6 @@ export const useProperties = () => {
     confirmDelete,
     dismissError,
     dismissSuccess,
-    refetch: fetchProperties,
+    refetch: () => fetchProperties({ force: true }),
   };
 };
